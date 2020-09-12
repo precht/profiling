@@ -1,7 +1,7 @@
 #include <iostream>
 #include <thread>
 
-#include "profiling/profiling.hpp"
+#include "profiling/Stopwatch.hpp"
 
 using namespace std;
 using namespace std::chrono_literals;
@@ -20,10 +20,11 @@ int main()
     this_thread::sleep_for(0.6s);
     w.lap();
     cout << w.str<chrono::milliseconds>() << endl;
+    cout << w.fullStr<chrono::milliseconds>() << endl;
 
     this_thread::sleep_for(10ms);
     w.lap();
-    cout << w.str<chrono::microseconds>() << endl;
+    cout << w.fullStr<chrono::microseconds>() << endl;
     cout << w.size() << " "
          << w.last<chrono::microseconds>() << " "
          << w.avg<chrono::microseconds>() << " "
@@ -31,7 +32,7 @@ int main()
          << w.stdev<chrono::microseconds>() << " "
          << endl;
 
-    w.clear();
+    w.start();
     cout << w.str<chrono::seconds>() << endl;
 
     return 0;

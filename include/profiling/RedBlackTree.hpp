@@ -1,7 +1,7 @@
 /**
  *  MIT License
  *
- *  Copyright (c) 2018 Jakub Precht <github.com/precht>
+ *  Copyright (c) 2020 Jakub Precht <github.com/precht>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,13 @@
  *  SOFTWARE.
  */
 
+#pragma once
+
 #include <queue>
 #include <ostream>
 #include <cassert>
 
-namespace jpds {
+namespace profiling {
 
 /////////////////////////////////////////////////////////////////////////////// DECLARATION ////////////////////////////
 
@@ -36,7 +38,7 @@ namespace jpds {
  * PBDS docs:
  * https://gcc.gnu.org/onlinedocs/libstdc++/ext/pb_ds/tree_based_containers.html
  *
- * Red black tree implementation based on 'Introduction to Algorithms, Third Edition' by T. H. Cormen
+ * Red-black tree implementation according to 'Introduction to Algorithms, Third Edition' by T. H. Cormen
  */
 template<
         typename Key,
@@ -54,16 +56,22 @@ class RedBlackTree
         bool color;
 
         Node() = delete;
-        explicit Node(const Key& key, size_t size, Node* left, Node* right, Node* parent, bool color);
+        Node(const Key& key, size_t size, Node* left, Node* right, Node* parent, bool color);
         void print(std::ostream& out) const;
     };
 
 public:
     class ConstIterator : public std::iterator<std::bidirectional_iterator_tag, Node>
     {
-    public:
+        friend class RedBlackTree<Key, CmpFn>;
         ConstIterator(const RedBlackTree* tree, Node* node);
+    public:
+        ConstIterator() = delete;
         ConstIterator(const ConstIterator& other);
+        ConstIterator(ConstIterator&&) = delete;
+        ConstIterator operator=(const ConstIterator& other);
+        ConstIterator operator=(ConstIterator&&) = delete;
+        ~ConstIterator() = default;
         ConstIterator& operator++();
         ConstIterator operator++(int);
         ConstIterator& operator--();
@@ -79,6 +87,9 @@ public:
 
     RedBlackTree();
     RedBlackTree(const RedBlackTree& other);
+    RedBlackTree(RedBlackTree&& other);
+    RedBlackTree operator=(const RedBlackTree& other);
+    RedBlackTree operator=(RedBlackTree&& other);
     ~RedBlackTree();
     std::pair<ConstIterator, bool> insert(const Key& key);
     ConstIterator erase(const Key& key);
@@ -97,6 +108,8 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const RedBlackTree<T, C>& tree);
 
 private:
+    void deleteAllMemory();
+    void deepCopy(const RedBlackTree& src, RedBlackTree& dst);
     bool equal(const Key& lhs, const Key& rhs) const;
     bool notEqual(const Key& lhs, const Key& rhs) const;
     Node* successor(Node* x) const;
@@ -126,31 +139,33 @@ private:
 
 template<typename Key, typename CmpFn> inline
 RedBlackTree<Key, CmpFn>::Node::Node(const Key& key, size_t size, Node* left, Node* right, Node* parent, bool color)
-    : size(size)
-    , left(left)
-    , right(right)
-    , parent(parent)
-    , key(key)
-    , color(color)
+    : size{size}
+    , left{left}
+    , right{right}
+    , parent{parent}
+    , key{key}
+    , color{color}
 { }
 
 template<typename Key, typename CmpFn> inline
-void RedBlackTree<Key, CmpFn>::Node::print(std::ostream& out) const
-{
-    out << "(k:" << key << ",s:" << size << ",c:" << color << ')';
-}
-
-template<typename Key, typename CmpFn> inline
 RedBlackTree<Key, CmpFn>::ConstIterator::ConstIterator(const RedBlackTree* tree, Node* node)
-    : m_tree(tree)
-    , m_node(node)
+    : m_tree{tree}
+    , m_node{node}
 { }
 
 template<typename Key, typename CmpFn> inline
 RedBlackTree<Key, CmpFn>::ConstIterator::ConstIterator(const RedBlackTree::ConstIterator& other)
-    : m_tree(other.m_tree)
-    , m_node(other.m_node)
+    : m_tree{other.m_tree}
+    , m_node{other.m_node}
 { }
+
+template<typename Key, typename CmpFn>
+typename RedBlackTree<Key, CmpFn>::ConstIterator
+RedBlackTree<Key, CmpFn>::ConstIterator::operator=(const RedBlackTree::ConstIterator& other)
+{
+    m_tree = other.m_tree;
+    m_node = other.m_node;
+}
 
 template<typename Key, typename CmpFn> inline
 typename RedBlackTree<Key, CmpFn>::ConstIterator& RedBlackTree<Key, CmpFn>::ConstIterator::operator++()
@@ -220,26 +235,71 @@ template<typename Key, typename CmpFn> inline
 RedBlackTree<Key, CmpFn>::RedBlackTree(const RedBlackTree& other)
     : RedBlackTree()
 {
-    if (other.m_root == other.m_nil)
-        return;
-    std::queue<Node*> buffor{};
-    buffor.push(other.m_root);
-    while (!buffor.empty()) {
-        Node* x = buffor.front();
-        buffor.pop();
-        insert(x->key);
-        if (x->left != other.m_nil)
-            buffor.push(x->left);
-        if (x->right != other.m_nil)
-            buffor.push(x->right);
-    }
+    deepCopy(other, *this);
+}
+
+template<typename Key, typename CmpFn>
+RedBlackTree<Key, CmpFn>::RedBlackTree(RedBlackTree&& other)
+    : m_nil{other.m_nil}
+    , m_root{other.m_root}
+{
+    other.m_nil = new Node{Key{}, 0, nullptr, nullptr, nullptr, BLACK};
+    other.m_root = other.m_nil;
+}
+
+template<typename Key, typename CmpFn>
+RedBlackTree<Key, CmpFn> RedBlackTree<Key, CmpFn>::operator=(const RedBlackTree& other)
+{
+    if(&other == this)
+        return *this;
+    deepCopy(other, *this);
+    return *this;
+}
+
+template<typename Key, typename CmpFn>
+RedBlackTree<Key, CmpFn> RedBlackTree<Key, CmpFn>::operator=(RedBlackTree&& other)
+{
+    if(&other == this)
+        return *this;
+    deleteAllMemory();
+    m_nil = other.m_nil;
+    m_root = other.m_root;
+    other.m_nil = new Node{Key{}, 0, nullptr, nullptr, nullptr, BLACK};
+    other.m_root = other.m_nil;
+    return *this;
 }
 
 template<typename Key, typename CmpFn> inline
 RedBlackTree<Key, CmpFn>::~RedBlackTree()
 {
+    deleteAllMemory();
+}
+
+template<typename Key, typename CmpFn>
+void RedBlackTree<Key, CmpFn>::deleteAllMemory()
+{
     eraseTree(m_root);
     delete m_nil;
+    m_nil = nullptr;
+    m_root = nullptr;
+}
+
+template<typename Key, typename CmpFn>
+void RedBlackTree<Key, CmpFn>::deepCopy(const RedBlackTree& src, RedBlackTree& dst)
+{
+    if (src.m_root == src.m_nil)
+        return;
+    std::queue<Node*> buffor{};
+    buffor.push(src.m_root);
+    while (!buffor.empty()) {
+        Node* x = buffor.front();
+        buffor.pop();
+        dst.insert(x->key);
+        if (x->left != src.m_nil)
+            buffor.push(x->left);
+        if (x->right != src.m_nil)
+            buffor.push(x->right);
+    }
 }
 
 template<typename Key, typename CmpFn> inline
@@ -363,14 +423,6 @@ void RedBlackTree<Key, CmpFn>::clear()
 {
     eraseTree(m_root);
     m_root = m_nil;
-}
-
-template<typename Key, typename CmpFn> inline
-std::ostream& operator<<(std::ostream& out, const RedBlackTree<Key, CmpFn>& tree)
-{
-    if (tree.m_root != tree.m_nil)
-        tree.print(out, tree.m_root, 0);
-    return out;
 }
 
 template<typename Key, typename CmpFn> inline
@@ -670,20 +722,34 @@ void RedBlackTree<Key, CmpFn>::fixUpErase(Node* x)
 }
 
 template<typename Key, typename CmpFn> inline
-void RedBlackTree<Key, CmpFn>::print(std::ostream& out, Node* x, size_t level) const
+std::ostream& operator<<(std::ostream& out, const RedBlackTree<Key, CmpFn>& tree)
 {
-    x->print(out);
-    out << '\n';
-    if (x->left != m_nil) {
-        for (size_t i = 0; i < level; i++) out << "     ";
-        out << "  ->L";
-        print(out, x->left, level+1);
+    if (tree.m_root == tree.m_nil) {
+        out << "<EMPTY_TREE>";
+        return out;
     }
-    if (x->right != m_nil) {
-        for (size_t i = 0; i < level; i++) out << "     ";
-        out << "  ->R";
-        print(out, x->right, level+1);
-    }
+
+    tree.print(out, tree.m_root, 0);
+    out << "(key,size,color)";
+    return out;
 }
 
-} //!jpds
+template<typename Key, typename CmpFn> inline
+void RedBlackTree<Key, CmpFn>::print(std::ostream& out, Node* x, size_t level) const
+{
+    if (x->right != m_nil)
+        print(out, x->right, level+1);
+    for (size_t i = 0; i < level; i++)
+        out << "\t";
+    x->print(out);
+    if (x->left != m_nil)
+        print(out, x->left, level+1);
+}
+
+template<typename Key, typename CmpFn> inline
+void RedBlackTree<Key, CmpFn>::Node::print(std::ostream& out) const
+{
+    out << "(" << key << "," << size << "," << color << ")\n";
+}
+
+} //!profiling
