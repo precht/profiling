@@ -3,7 +3,7 @@ Header-only C++ utilities for measuring performance.
 
 ## Stopwatch
 
-Similarly to a traditional stopwatch, we store measured laps and we can calculate basic statistics: average, median and standard deviation. Requires  C++17. 
+As with a traditional stopwatch, we store measured laps and we can calculate basic statistics: average, median and standard deviation. Requires  C++17. 
 
 Time complexity: 
 
