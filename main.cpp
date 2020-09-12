@@ -1,8 +1,9 @@
 #include <iostream>
 #include <thread>
 
-#include "profiling.hpp"
+#include "profiling/profiling.hpp"
 
+using namespace std;
 using namespace std::chrono_literals;
 
 int main()
@@ -10,22 +11,28 @@ int main()
     profiling::Stopwatch w{};
     w.start();
 
-    std::this_thread::sleep_for(1.2s);
+    this_thread::sleep_for(1.2s);
     w.lap();
-    std::this_thread::sleep_for(0.5s);
+    this_thread::sleep_for(0.5s);
     w.lap();
-    std::this_thread::sleep_for(0.75s);
+    this_thread::sleep_for(0.75s);
     w.lap();
-    std::this_thread::sleep_for(0.6s);
+    this_thread::sleep_for(0.6s);
     w.lap();
-    std::cout << w.string<std::chrono::milliseconds>() << std::endl;
+    cout << w.str<chrono::milliseconds>() << endl;
 
-    std::this_thread::sleep_for(10ms);
+    this_thread::sleep_for(10ms);
     w.lap();
-    std::cout << w.string<std::chrono::milliseconds>() << std::endl;
+    cout << w.str<chrono::microseconds>() << endl;
+    cout << w.size() << " "
+         << w.last<chrono::microseconds>() << " "
+         << w.avg<chrono::microseconds>() << " "
+         << w.median<chrono::microseconds>() << " "
+         << w.stdev<chrono::microseconds>() << " "
+         << endl;
 
     w.clear();
-    std::cout << w.string<std::chrono::microseconds>() << std::endl;
+    cout << w.str<chrono::seconds>() << endl;
 
     return 0;
 }

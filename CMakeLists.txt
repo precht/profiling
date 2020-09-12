@@ -13,7 +13,6 @@ find_package(TBB REQUIRED)
 include_directories(include)
 
 add_executable(${PROJECT_NAME}
-    include/profiling.hpp
     main.cpp
 )
 
