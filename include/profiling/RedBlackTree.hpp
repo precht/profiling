@@ -27,6 +27,8 @@
 #include <queue>
 #include <ostream>
 #include <cassert>
+#include <sstream>
+#include <string_view>
 
 namespace profiling {
 
@@ -57,7 +59,7 @@ class RedBlackTree
 
         Node() = delete;
         Node(const Key& key, size_t size, Node* left, Node* right, Node* parent, bool color);
-        void print(std::ostream& out) const;
+        std::string str() const;
     };
 
 public:
@@ -125,7 +127,7 @@ private:
     ConstIterator erase(Node* z);
     void fixUpErase(Node* x);
     void fixUpInsert(Node* z);
-    void print(std::ostream& out, Node* x, size_t level) const;
+    void print(std::ostream& out, Node* x, std::string& prefix) const;
 
     static constexpr bool RED = 0;
     static constexpr bool BLACK = 1;
@@ -725,31 +727,44 @@ template<typename Key, typename CmpFn> inline
 std::ostream& operator<<(std::ostream& out, const RedBlackTree<Key, CmpFn>& tree)
 {
     if (tree.m_root == tree.m_nil) {
-        out << "<EMPTY_TREE>";
+        out << "(empty_tree)";
         return out;
     }
 
-    tree.print(out, tree.m_root, 0);
+    std::string prefix = " ";
+    tree.print(out, tree.m_root, prefix);
     out << "(key,size,color)";
     return out;
 }
 
 template<typename Key, typename CmpFn> inline
-void RedBlackTree<Key, CmpFn>::print(std::ostream& out, Node* x, size_t level) const
+void RedBlackTree<Key, CmpFn>::print(std::ostream& out, Node* x, std::string& prefix) const
 {
+    auto prefixEnd = prefix.back();
+    auto prefixSize = prefix.size();
+    std::string str = x->str();
+
+    prefix[prefixSize - 1] = (x->parent->right == x) ? ' ' : prefixEnd;
+    prefix.resize(prefix.size() + str.size() - 1, ' ');
+    prefix.back() = '|';
     if (x->right != m_nil)
-        print(out, x->right, level+1);
-    for (size_t i = 0; i < level; i++)
-        out << "\t";
-    x->print(out);
+        print(out, x->right, prefix);
+
+    std::string_view prefixView = prefix;
+    out << prefixView.substr(0, prefix.size() - str.size()) << str << '\n';
+
+    prefix[prefixSize - 1] = (x->parent->right == x) ? prefixEnd : ' ';
     if (x->left != m_nil)
-        print(out, x->left, level+1);
+        print(out, x->left, prefix);
+    prefix.resize(prefix.size() - str.size() + 1);
 }
 
 template<typename Key, typename CmpFn> inline
-void RedBlackTree<Key, CmpFn>::Node::print(std::ostream& out) const
+std::string RedBlackTree<Key, CmpFn>::Node::str() const
 {
-    out << "(" << key << "," << size << "," << color << ")\n";
+    std::stringstream ss{};
+    ss << '(' << key << ',' << size << ',' << (color ? 'b' : 'r') << ')';
+    return ss.str();
 }
 
 } //!profiling

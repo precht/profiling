@@ -46,22 +46,22 @@ public:
 
     void lap();
 
-    template<typename Duration>
+    template<typename Duration = Clock::duration>
     int64_t last() const;
 
-    template<typename Duration>
+    template<typename Duration = Clock::duration>
     int64_t avg() const;
 
-    template<typename Duration>
+    template<typename Duration = Clock::duration>
     int64_t median() const;
 
-    template<typename Duration>
+    template<typename Duration = Clock::duration>
     int64_t stdev();
 
-    template<typename Duration>
+    template<typename Duration = Clock::duration>
     std::string str();
 
-    template<typename Duration>
+    template<typename Duration = Clock::duration>
     std::string fullStr();
 
     size_t size() const;

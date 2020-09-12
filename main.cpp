@@ -17,23 +17,26 @@ int main()
     w.lap();
     this_thread::sleep_for(0.75s);
     w.lap();
+
+    cout << w.str() << '\n';
+    cout << w.fullStr() << '\n';
+
     this_thread::sleep_for(0.6s);
     w.lap();
-    cout << w.str<chrono::milliseconds>() << endl;
-    cout << w.fullStr<chrono::milliseconds>() << endl;
 
-    this_thread::sleep_for(10ms);
-    w.lap();
-    cout << w.fullStr<chrono::microseconds>() << endl;
-    cout << w.size() << " "
-         << w.last<chrono::microseconds>() << " "
-         << w.avg<chrono::microseconds>() << " "
-         << w.median<chrono::microseconds>() << " "
-         << w.stdev<chrono::microseconds>() << " "
-         << endl;
+    cout << w.str<chrono::milliseconds>() << '\n';
+    cout << w.fullStr<chrono::milliseconds>() << '\n';
 
     w.start();
-    cout << w.str<chrono::seconds>() << endl;
+    cout << w.str() << '\n';
+
+    w.lap();
+    cout << "\nsize: "   << w.size()
+         << "\nlast: "   << w.last()   << ' ' << w.last<chrono::microseconds>()
+         << "\navg: "    << w.avg()    << ' ' << w.avg<chrono::microseconds>()
+         << "\nmedian: " << w.median() << ' ' << w.median<chrono::microseconds>()
+         << "\nstdev: "  << w.stdev()  << ' ' << w.stdev<chrono::microseconds>()
+         << endl;
 
     return 0;
 }
