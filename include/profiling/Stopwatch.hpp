@@ -64,7 +64,6 @@ public:
     template<typename Duration>
     std::string fullStr();
 
-
     size_t size() const;
 
 private:
@@ -122,10 +121,10 @@ constexpr const char* Stopwatch::unit() {
 
 inline void Stopwatch::start()
 {
-    m_timepoint = Clock::now();
     m_sum = {};
     m_array.clear();
     m_set.clear();
+    m_timepoint = Clock::now();
 }
 
 inline void Stopwatch::lap()

@@ -35,11 +35,11 @@ this_thread::sleep_for(10ms);
 w.lap();
 cout << w.fullStr<chrono::microseconds>() << endl;
 cout << w.size() << " "
-<< w.last<chrono::microseconds>() << " "
-<< w.avg<chrono::microseconds>() << " "
-<< w.median<chrono::microseconds>() << " "
-<< w.stdev<chrono::microseconds>() << " "
-<< endl;
+     << w.last<chrono::microseconds>() << " "
+     << w.avg<chrono::microseconds>() << " "
+     << w.median<chrono::microseconds>() << " "
+     << w.stdev<chrono::microseconds>() << " "
+     << endl;
 
 w.start();
 cout << w.str<chrono::seconds>() << endl;
