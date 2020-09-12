@@ -55,7 +55,7 @@ public:
     int64_t avg() const;
 
     template<typename Duration>
-    int64_t median();
+    int64_t median() const;
 
     template<typename Duration>
     int64_t stdev();
@@ -111,6 +111,9 @@ std::string Stopwatch::str()
 inline void Stopwatch::start()
 {
     m_timepoint = Clock::now();
+    m_sum = {};
+    m_array.clear();
+    m_tree.clear();
 }
 
 inline void Stopwatch::lap()
@@ -139,7 +142,7 @@ int64_t Stopwatch::avg() const
 }
 
 template<typename Duration> inline
-int64_t Stopwatch::median()
+int64_t Stopwatch::median() const
 {
     if (m_tree.empty())
         return 0;
@@ -176,10 +179,7 @@ inline size_t Stopwatch::size() const
 
 inline void Stopwatch::clear()
 {
-    m_timepoint = {};
-    m_sum = {};
-    m_array.clear();
-    m_tree.clear();
+    start();
 }
 
 } //!profiling
