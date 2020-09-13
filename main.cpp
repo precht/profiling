@@ -9,34 +9,33 @@ using namespace std::chrono_literals;
 int main()
 {
     profiling::Stopwatch w{};
-    w.start();
 
+    w.start();
     this_thread::sleep_for(1.2s);
-    w.lap();
+    w.stop();
+    w.start();
     this_thread::sleep_for(0.5s);
-    w.lap();
+    w.stop();
+    w.start();
     this_thread::sleep_for(0.75s);
-    w.lap();
+    w.stop();
 
-    cout << w.str() << '\n';
-    cout << w.fullStr() << '\n';
-
-    this_thread::sleep_for(0.6s);
-    w.lap();
-
-    cout << w.str<chrono::milliseconds>() << '\n';
-    cout << w.fullStr<chrono::milliseconds>() << '\n';
+    cout << w.str() << "\n";
+    cout << w.fullStr() << "\n\n";
 
     w.start();
-    cout << w.str() << '\n';
+    this_thread::sleep_for(0.6s);
+    w.stop();
 
-    w.lap();
-    cout << "\nsize: "   << w.size()
-         << "\nlast: "   << w.last()   << ' ' << w.last<chrono::microseconds>()
-         << "\navg: "    << w.avg()    << ' ' << w.avg<chrono::microseconds>()
-         << "\nmedian: " << w.median() << ' ' << w.median<chrono::microseconds>()
-         << "\nstdev: "  << w.stdev()  << ' ' << w.stdev<chrono::microseconds>()
-         << endl;
+    cout << w.str<chrono::milliseconds>() << "\n";
+    cout << w.fullStr<chrono::milliseconds>() << "\n";
+
+    cout << "\nsize   " << w.size()
+         << "\nlast   " << w.last()   << '\t' << w.last<chrono::milliseconds>()
+         << "\navg    " << w.avg()    << '\t' << w.avg<chrono::milliseconds>()
+         << "\nmedian " << w.median() << '\t' << w.median<chrono::milliseconds>()
+         << "\nstdev  " << w.stdev()  << '\t' << w.stdev<chrono::milliseconds>()
+         << "\n";
 
     return 0;
 }

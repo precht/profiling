@@ -44,7 +44,9 @@ public:
 
     void start();
 
-    void lap();
+    void stop();
+
+    void clear();
 
     template<typename Duration = Clock::duration>
     int64_t last() const;
@@ -70,6 +72,7 @@ private:
     template<typename Duration>
     constexpr const char* unit();
 
+    bool m_started{};
     Clock::time_point m_timepoint{};
     Clock::duration m_sum{};
     std::vector<Clock::duration> m_array{};
@@ -121,19 +124,31 @@ constexpr const char* Stopwatch::unit() {
 
 inline void Stopwatch::start()
 {
-    m_sum = {};
-    m_array.clear();
-    m_set.clear();
+    m_started = true;
     m_timepoint = Clock::now();
 }
 
-inline void Stopwatch::lap()
+inline void Stopwatch::stop()
 {
     auto tp = Clock::now();
+
+    if (not m_started)
+        throw std::logic_error("profiling::Stopwatch: stop() should be called after start()!");
+    m_started = false;
+
     m_array.emplace_back(tp - m_timepoint);
     m_timepoint = tp;
     m_set.insert(m_array.back());
     m_sum += m_array.back();
+}
+
+inline void Stopwatch::clear()
+{
+    m_timepoint = {};
+    m_started = {};
+    m_sum = {};
+    m_array.clear();
+    m_set.clear();
 }
 
 template<typename Duration> inline
