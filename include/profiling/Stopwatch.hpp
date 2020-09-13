@@ -37,6 +37,13 @@ namespace profiling {
 
 /////////////////////////////////////////////////////////////////////////////// DECLARATION ////////////////////////////
 
+using Info = uint8_t;
+constexpr Info INFO_ALL    = 0b1111;
+constexpr Info INFO_LAST   = 0b1000;
+constexpr Info INFO_AVG    = 0b0100;
+constexpr Info INFO_MEDIAN = 0b0010;
+constexpr Info INFO_STDEV  = 0b0001;
+
 class Stopwatch
 {
 public:
@@ -47,6 +54,8 @@ public:
     void stop();
 
     void clear();
+
+    size_t size() const;
 
     template<typename Duration = Clock::duration>
     int64_t last() const;
@@ -61,12 +70,7 @@ public:
     int64_t stdev();
 
     template<typename Duration = Clock::duration>
-    std::string str();
-
-    template<typename Duration = Clock::duration>
-    std::string fullStr();
-
-    size_t size() const;
+    std::string str(Info info = INFO_ALL);
 
 private:
     template<typename Duration>
@@ -82,30 +86,24 @@ private:
 /////////////////////////////////////////////////////////////////////////////// DEFINITION /////////////////////////////
 
 template<typename Duration> inline
-std::string Stopwatch::str()
+std::string Stopwatch::str(Info info)
 {
     std::stringstream ss{};
-    ss << "laps: " << m_array.size() << ", "
-       << "last: " << last<Duration>() << unit<Duration>() << ", "
-       << "avg: " << avg<Duration>() << unit<Duration>() << ", "
-       << "median: " << median<Duration>() << unit<Duration>();
+    ss << "laps: " << m_array.size();
+    if (info & INFO_LAST)
+       ss << ", last: " << last<Duration>() << unit<Duration>();
+    if (info & INFO_AVG)
+       ss << ", avg: " << avg<Duration>() << unit<Duration>();
+    if (info & INFO_MEDIAN)
+       ss << ", median: " << median<Duration>() << unit<Duration>();
+    if (info & INFO_STDEV)
+       ss << ", stdev: " << stdev<Duration>() << unit<Duration>();
     return ss.str();
 }
 
 template<typename Duration> inline
-std::string Stopwatch::fullStr()
+constexpr const char* Stopwatch::unit()
 {
-    std::stringstream ss{};
-    ss << "laps: " << m_array.size() << ", "
-       << "last: " << last<Duration>() << unit<Duration>() << ", "
-       << "avg: " << avg<Duration>() << unit<Duration>() << ", "
-       << "median: " << median<Duration>() << unit<Duration>() << ", "
-       << "stdev: " << stdev<Duration>() << unit<Duration>();
-    return ss.str();
-}
-
-template<typename Duration> inline
-constexpr const char* Stopwatch::unit() {
     if constexpr (std::is_same<Duration, std::chrono::hours>::value)
         return "h";
     else if constexpr (std::is_same<Duration, std::chrono::minutes>::value)
