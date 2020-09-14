@@ -1,15 +1,14 @@
 #include <iostream>
 #include <thread>
 
-#include "profiling/Stopwatch.hpp"
+#include "jp/Stopwatch.hpp"
 
 using namespace std;
 using namespace std::chrono;
-using namespace profiling;
 
 int main()
 {
-    Stopwatch w{};
+    jp::Stopwatch w{};
 
     w.start();
     this_thread::sleep_for(1.2s);
@@ -28,7 +27,8 @@ int main()
     w.stop();
 
     cout << w.str<milliseconds>() << "\n";
-    cout << w.str<milliseconds>(INFO_LAST | INFO_AVG) << "\n";
+    cout << w.str<milliseconds>(jp::INFO_LAST | jp::INFO_AVG) << "\n";
+    cout << w.str<milliseconds>(~jp::INFO_STDEV) << "\n";
 
     cout << "\nsize   " << w.size()
          << "\nlast   " << w.last()   << '\t' << w.last<milliseconds>()

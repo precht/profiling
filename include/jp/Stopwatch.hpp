@@ -29,20 +29,22 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <locale>
 #include <type_traits>
 
-#include "RedBlackTree.hpp"
+#include "ordered_set.hpp"
 
-namespace profiling {
+namespace jp {
 
 /////////////////////////////////////////////////////////////////////////////// DECLARATION ////////////////////////////
 
-using Info = uint8_t;
-constexpr Info INFO_ALL    = 0b1111;
-constexpr Info INFO_LAST   = 0b1000;
-constexpr Info INFO_AVG    = 0b0100;
-constexpr Info INFO_MEDIAN = 0b0010;
-constexpr Info INFO_STDEV  = 0b0001;
+using Info = int8_t;
+constexpr Info INFO_ALL    = 0b11111;
+constexpr Info INFO_SUM    = 0b10000;
+constexpr Info INFO_LAST   = 0b01000;
+constexpr Info INFO_AVG    = 0b00100;
+constexpr Info INFO_MEDIAN = 0b00010;
+constexpr Info INFO_STDEV  = 0b00001;
 
 class Stopwatch
 {
@@ -56,6 +58,9 @@ public:
     void clear();
 
     size_t size() const;
+
+    template<typename Duration = Clock::duration>
+    int64_t sum() const;
 
     template<typename Duration = Clock::duration>
     int64_t last() const;
@@ -73,6 +78,13 @@ public:
     std::string str(Info info = INFO_ALL);
 
 private:
+    struct ThousandsSepApostrophe : std::numpunct<char>
+    {
+    protected:
+        char_type do_thousands_sep() const override;
+        std::string do_grouping() const override;
+    };
+
     template<typename Duration>
     constexpr const char* unit();
 
@@ -80,7 +92,7 @@ private:
     Clock::time_point m_timepoint{};
     Clock::duration m_sum{};
     std::vector<Clock::duration> m_array{};
-    RedBlackTree<Clock::duration> m_set{};
+    jp::ordered_set<Clock::duration> m_set{};
 };
 
 /////////////////////////////////////////////////////////////////////////////// DEFINITION /////////////////////////////
@@ -88,8 +100,12 @@ private:
 template<typename Duration> inline
 std::string Stopwatch::str(Info info)
 {
+    static auto loc = std::locale(std::locale::classic(), new ThousandsSepApostrophe);
     std::stringstream ss{};
+    ss.imbue(loc);
     ss << "laps: " << m_array.size();
+    if (info & INFO_SUM)
+       ss << ", sum: " << sum<Duration>() << unit<Duration>();
     if (info & INFO_LAST)
        ss << ", last: " << last<Duration>() << unit<Duration>();
     if (info & INFO_AVG)
@@ -150,6 +166,14 @@ inline void Stopwatch::clear()
 }
 
 template<typename Duration> inline
+int64_t Stopwatch::sum() const
+{
+    if (m_array.empty())
+        return 0;
+    return std::chrono::duration_cast<Duration>(m_sum).count();
+}
+
+template<typename Duration> inline
 int64_t Stopwatch::last() const
 {
     if (m_array.empty())
@@ -173,7 +197,7 @@ int64_t Stopwatch::median() const
     uint64_t sz = m_set.size();
     uint64_t idx1 = sz >> 1;
     uint64_t idx2 = idx1 - (!(sz & 1) && (sz & ~uint64_t{1}));
-    return std::chrono::duration_cast<Duration>(*m_set.findByOrder(idx1) + *m_set.findByOrder(idx2)).count() >> 1;
+    return std::chrono::duration_cast<Duration>(*m_set.find_by_order(idx1) + *m_set.find_by_order(idx2)).count() >> 1;
 }
 
 template<typename Duration> inline
@@ -196,4 +220,14 @@ inline size_t Stopwatch::size() const
     return m_array.size();
 }
 
-} //!profiling
+inline std::numpunct<char>::char_type Stopwatch::ThousandsSepApostrophe::do_thousands_sep() const
+{
+    return '\'';
+}
+
+inline std::string Stopwatch::ThousandsSepApostrophe::do_grouping() const
+{
+    return "\3";
+}
+
+} //!jp
