@@ -49,7 +49,9 @@ constexpr Info INFO_STDEV  = 0b00001;
 class Stopwatch
 {
 public:
-    using Clock = std::chrono::steady_clock;
+    using Clock = std::conditional_t<std::chrono::high_resolution_clock::is_steady,
+                                     std::chrono::high_resolution_clock,
+                                     std::chrono::steady_clock>;
 
     void start();
 
